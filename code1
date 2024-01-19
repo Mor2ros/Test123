@@ -1,0 +1,75 @@
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<script type="text/javascript" src="js/jquery-1.8.3.min.js"></script>
+	<script src="uploadify/jquery.uploadify.min.js" type="text/javascript"></script>
+	<link rel="stylesheet" type="text/css" href="uploadify/uploadify.css">
+	<script type="text/javascript">
+		<?php $timestamp = time();?>
+		$(function() {
+			<?php echo "id_dog = '".$_POST["dog_id"]."'"; ?>;
+			$('#file_upload').uploadify({ 
+				'formData'     : {
+					'timestamp' : '<?php echo $timestamp;?>',
+					'token'     : '<?php echo md5('unique_salt' . $timestamp);?>',
+					'dog_id'	: id_dog
+				},
+				'swf'      : 'uploadify/uploadify.swf',
+				'uploader' : 'uploadify/uploadify.php',
+				'onUploadSuccess' : function(file, data, response) {
+					$.ajax({
+					  		type: 'POST',
+					  		url: 'sel_photo.php',
+					  		data: {dog_id: <?php echo $_POST["dog_id"]; ?>},
+					  		success: function(data)
+					  		{
+								$('.photos').fadeOut(200).html(data).fadeIn(200);
+					  		}
+						});
+						
+				}
+			});
+		});
+	</script>
+</head>
+<body>
+<div class="close"><a href="" onclick="window.close(); return false;">Закрыть вкладку</a></div>		
+	
+
+
+<?php
+	include "bd_connect.php";
+	
+	if (isset($_POST['dog_id']))
+	{ 
+		$sql = "SELECT *  from   `dog`  where  `id_dog`='".$_POST['dog_id']."'";
+		$rs = $db->query($sql);
+		$obj=$db->fetch($rs);
+
+		echo "<H2>Кличка:".$obj['name']." Учетный номер:".$obj['num']."</H2>";
+
+		$sql = "SELECT `id`, `url`  from   `photo`  where `id_dog`='".$_POST['dog_id']."'";
+		$rs = $db->query($sql);
+		echo "<div class='photos'>";
+		if ($db->numRows($rs)>0){
+		
+			while($obj = $db->fetch($rs)) {
+				echo "<div class='photo_dog'><img src='photo/".$obj['url']."' /></div>";
+			}
+		}else{ echo "<h1>Фотографии отсутствуют!</h1>";}
+		echo "</div>";
+	}
+	//$jsonstr = json_encode($arr);
+	//echo '{"events":'.$jsonstr.'}';
+	//var_dump(  json_decode($jsonstr) );
+
+
+
+?>
+<form>
+	
+	<input id="file_upload" name="file_upload" type="file" multiple="true">
+	<div id="queue"></div>
+</form>
+</body>
+</html>
